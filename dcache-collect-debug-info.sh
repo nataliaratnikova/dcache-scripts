@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Collect debugging information for Dcache.
-
+JAVA_HOME=/usr/java/default   # for jmap to be found during heap dump . 
 DCACHE_DEBUG_DIR=/var/log/dcache-debug
 
 set -x
@@ -15,18 +15,21 @@ HOW_MANY_THREAD_DUMPS=10
 for i in `seq 1 $HOW_MANY_THREAD_DUMPS` ; do
   # Thread dumps are written in de *Domain.log files
   /usr/bin/dcache dump threads
-  if [ "`hostname -s`" == "srm" ] ; then
-    psql -U postgres dcache  -c "select * from pg_stat_activity;" > $DCACHE_DEBUG_DIR/pg_stat_activity-${i}-`date +%T`.txt
-  fi
-  if [ "`hostname -s`" == "namespace" ] ; then
-    psql -U postgres chimera -c "select * from pg_stat_activity;" > $DCACHE_DEBUG_DIR/pg_stat_activity-${i}-`date +%T`.txt
-  fi
+
+## These are relying on SARA-specific host naming conventions => comment them out:
+#  if [ "`hostname -s`" == "srm" ] ; then
+#    psql -U postgres dcache  -c "select * from pg_stat_activity;" > $DCACHE_DEBUG_DIR/pg_stat_activity-${i}-`date +%T`.txt
+#  fi
+#  if [ "`hostname -s`" == "namespace" ] ; then
+#    psql -U postgres chimera -c "select * from pg_stat_activity;" > $DCACHE_DEBUG_DIR/pg_stat_activity-${i}-`date +%T`.txt
+#  fi
   sleep 5
 done
 
 HOW_MANY_LINES=200000
 # Save the last lines of each Dcache log file
-for file in /var/log/*Domain.log ; do
+#for file in /var/log/*Domain.log ; do
+for file in /var/log/dcache/*Domain.log ; do
   basename=`basename $file`
   tail -n $HOW_MANY_LINES $file > $DCACHE_DEBUG_DIR/${basename}-last-$HOW_MANY_LINES-lines-including-$HOW_MANY_THREAD_DUMPS-thread-dumps.txt
 done
